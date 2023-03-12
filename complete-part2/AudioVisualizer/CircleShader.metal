@@ -25,7 +25,7 @@ vertex VertexOut vertexShader(const constant vector_float2 *vertexArray [[buffer
     if(vid<1081){ //circle
         vector_float2 currentVertex = vertexArray[vid]; //fetch the current vertex we're on using the vid to index into our buffer data which holds all of our vertex points that we passed in
         output.pos = vector_float4(currentVertex.x*circleScaler, currentVertex.y*circleScaler, 0, 1); //populate the output position with the x and y values of our input vertex data
-        output.color = vector_float4(1,1,1,1);//set the color
+        output.color = vector_float4(0,0,0,1);//set the color
     } else { //frequency lines
         int circleId = vid-1081;
         vector_float2 circleVertex;

@@ -17,6 +17,12 @@ class AudioVisualizer: NSView {
     private var metalDevice : MTLDevice!
     private var metalCommandQueue : MTLCommandQueue!
     private var metalRenderPipelineState : MTLRenderPipelineState!
+
+    public var color: [Double] = [0, 0, 0, 1] {
+        didSet {
+            metalView.draw()
+        }
+    }
     
     //MARK: VERTEX VARS
     private var circleVertices = [simd_float2]()
@@ -33,7 +39,7 @@ class AudioVisualizer: NSView {
     private var freqeuencyBuffer : MTLBuffer!
     public var frequencyVertices : [Float] = [Float](repeating: 0, count: 361) {
         didSet{
-            let sliced = Array(frequencyVertices[76..<438])
+            let sliced = Array(frequencyVertices[76..<437])
             freqeuencyBuffer = metalDevice.makeBuffer(bytes: sliced, length: sliced.count * MemoryLayout<Float>.stride, options: [])!
             metalView.draw()
         }
@@ -141,7 +147,7 @@ extension AudioVisualizer : MTKViewDelegate {
         //Creating the interface for the pipeline
         guard let renderDescriptor = view.currentRenderPassDescriptor else {return}
         //Setting a "background color"
-        renderDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 1)
+        renderDescriptor.colorAttachments[0].clearColor = MTLClearColorMake(color[0], color[1], color[2], color[3])
         
         //Creating the command encoder, or the "inside" of the pipeline
         guard let renderEncoder = commandBuffer.makeRenderCommandEncoder(descriptor: renderDescriptor) else {return}

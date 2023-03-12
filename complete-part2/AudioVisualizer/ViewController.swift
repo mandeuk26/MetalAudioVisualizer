@@ -9,14 +9,18 @@
 import Cocoa
 import AVFoundation
 import Accelerate
+import Combine
 
 class ViewController: NSViewController {
     var engine : AVAudioEngine!
     var audioVisualizer : AudioVisualizer!
+    var beatDetection: BeatDetection!
+    var cancellable: AnyCancellable?
     
     override func viewDidLoad() {
         super.viewDidLoad()
         audioVisualizer = AudioVisualizer()
+        beatDetection = BeatDetection()
         view.addSubview(audioVisualizer)
         
         //constraining to window
@@ -26,6 +30,13 @@ class ViewController: NSViewController {
         audioVisualizer.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
         
         setupAudio()
+
+        cancellable = beatDetection.onBeatSubject.sink { [weak self] in
+            let red = Double((0...255).randomElement() ?? 0) / 256
+            let green = Double((0...255).randomElement() ?? 0) / 256
+            let blue = Double((0...255).randomElement() ?? 0) / 256
+            self?.audioVisualizer.color = [red, green, blue, 1]
+        }
     }
     
     func setupAudio(){
@@ -80,8 +91,10 @@ class ViewController: NSViewController {
         
         //tap it to get the buffer data at playtime
         
-        engine.mainMixerNode.installTap(onBus: 0, bufferSize: 1024, format: nil) { (buffer, time) in
-            self.processAudioData(buffer: buffer)
+        engine.mainMixerNode.installTap(onBus: 0, bufferSize: 1024, format: nil) { [weak self] buffer, time in
+            DispatchQueue.global().async {
+                self?.processAudioData(buffer: buffer)
+            }
         }
         
         //start playing the music!
@@ -110,6 +123,7 @@ class ViewController: NSViewController {
         
         //fft
         let fftMagnitudes =  SignalProcessing.fft(data: channelData, setup: fftSetup!)
+        beatDetection.update(spectrums: fftMagnitudes)
         audioVisualizer.frequencyVertices = fftMagnitudes
     }
 }
